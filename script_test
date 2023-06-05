@@ -1,0 +1,34 @@
+DECLARE @StartDate DATE = '2023-05-20';
+DECLARE @EndDate DATE = '2023-10-10';
+
+-- Определяем первый месяц и последний месяц промежутка
+DECLARE @FirstMonthStartDate DATE = DATEFROMPARTS(YEAR(@StartDate), MONTH(@StartDate), 1);
+DECLARE @LastMonthEndDate DATE = EOMONTH(@EndDate);
+
+-- Создаем временную таблицу для хранения промежутков
+CREATE TABLE #Intervals (
+    StartDate DATE,
+    EndDate DATE
+);
+
+-- Вставляем первый промежуток с @StartDate и последним днем месяца, содержащего @StartDate
+INSERT INTO #Intervals (StartDate, EndDate)
+VALUES (@StartDate, EOMONTH(@StartDate));
+
+-- Генерируем последовательные промежутки для каждого месяца, начиная со следующего месяца, до конца промежутка
+DECLARE @NextMonthStartDate DATE = DATEADD(MONTH, 1, @FirstMonthStartDate);
+WHILE @NextMonthStartDate <= @LastMonthEndDate
+BEGIN
+    INSERT INTO #Intervals (StartDate, EndDate)
+    VALUES (@NextMonthStartDate, EOMONTH(@NextMonthStartDate));
+    
+    SET @NextMonthStartDate = DATEADD(MONTH, 1, @NextMonthStartDate);
+END
+
+-- Выводим результат
+SELECT StartDate, CASE WHEN EndDate > @EndDate THEN @EndDate ELSE EndDate END AS EndDate
+FROM #Intervals
+WHERE StartDate <= @EndDate;
+
+-- Удаляем временную таблицу
+DROP TABLE #Intervals;
