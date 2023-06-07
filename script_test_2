@@ -1,0 +1,36 @@
+DECLARE @startDate DATE = '2023-05-20';
+DECLARE @endDate DATE = '2023-10-10';
+DECLARE @totalAmount FLOAT = 120.0;
+
+WITH cte AS (
+  SELECT
+    CAST(@startDate AS DATETIME) AS start_date,
+    CAST(DATEADD(DAY, 10, @startDate) AS DATETIME) AS end_date,
+    CASE
+      WHEN DATEDIFF(DAY, @startDate, @endDate) < 30 THEN CAST(DATEDIFF(DAY, @startDate, @endDate) AS FLOAT) / 30.0
+      WHEN MONTH(@startDate) = MONTH(@endDate) THEN 1.0
+      ELSE 1.0 - CAST((DATEPART(DAY, @endDate) - 1) AS FLOAT) / 30.0
+    END AS coefficient
+  UNION ALL
+  SELECT
+    DATEADD(DAY, 1, end_date),
+    CASE
+      WHEN MONTH(DATEADD(DAY, 1, end_date)) = MONTH(@endDate) THEN CAST(@endDate AS DATETIME)
+      ELSE CAST(DATEADD(DAY, -1, DATEADD(MONTH, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, DATEADD(DAY, 1, end_date)), 0))) AS DATETIME)
+    END,
+    CASE
+      WHEN MONTH(DATEADD(DAY, 1, end_date)) = MONTH(@endDate) THEN CAST((DATEPART(DAY, @endDate) - DATEPART(DAY, DATEADD(DAY, 1, end_date)) + 1) AS FLOAT) / 30.0
+      ELSE 1.0
+    END
+  FROM
+    cte
+  WHERE
+    DATEADD(DAY, 1, end_date) <= @endDate
+)
+
+SELECT
+  start_date,
+  end_date,
+  ROUND(coefficient / SUM(coefficient) OVER(), 2) * @totalAmount AS distributed_amount
+FROM
+  cte;
