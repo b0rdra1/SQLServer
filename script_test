@@ -1,3 +1,24 @@
+	DECLARE
+    @startDate1 DATE = '2023-01-10',
+    @endDate1 DATE = '2023-06-15',
+    @startDate2 DATE = '2023-05-01',
+    @endDate2 DATE = '2023-06-15'
+
+    DECLARE @intersectionStartDate DATE
+    DECLARE @intersectionEndDate DATE
+    
+    SET @intersectionStartDate = CASE WHEN @startDate1 > @startDate2 THEN @startDate1 ELSE @startDate2 END
+    SET @intersectionEndDate = CASE WHEN @endDate1 < @endDate2 THEN @endDate1 ELSE @endDate2 END
+    
+    IF @intersectionStartDate <= @intersectionEndDate
+    BEGIN
+        SELECT @intersectionStartDate AS IntersectionStartDate, @intersectionEndDate AS IntersectionEndDate
+    END
+    ELSE
+    BEGIN
+        SELECT 'No intersection' AS Result
+    END
+
 DECLARE @StartDate DATE = '2023-05-20';
 DECLARE @EndDate DATE = '2023-10-10';
 
