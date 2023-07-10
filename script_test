@@ -1,4 +1,56 @@
-	DECLARE
+DECLARE @TempTable2 TABLE (
+    Amount INT,
+    MinDate DATE,
+    MaxDate DATE
+);
+
+
+DECLARE @TempTable TABLE (
+    Number INT,
+    Amount INT,
+    StartDate DATE,
+    EndDate DATE,
+    MinDate DATE,
+    MaxDate DATE,
+    TotalAmount INT
+);
+
+INSERT INTO @TempTable (Number, StartDate, EndDate, Amount)
+VALUES (1, '2020-01-01', '2020-12-31', 300),
+       (2, '2021-01-01', '2021-12-31', 300),
+       (3, '2022-01-01', '2022-12-31', 600),
+       (4, '2023-01-01', '2023-12-31', 900),
+       (5, '2023-12-10', '2024-12-31', 1200);
+
+SELECT * FROM @TempTable;
+
+INSERT INTO @TempTable2
+SELECT t1.Amount, MIN(t1.StartDate) AS MinStartDate, MAX(t2.EndDate) AS MaxEndDate--, t1.Amount AS TotalAmount
+FROM @TempTable t1
+INNER JOIN @TempTable t2 ON t1.Amount = t2.Amount AND t1.StartDate = t2.StartDate AND t1.EndDate = t2.EndDate
+GROUP BY t1.Amount;
+SELECT * FROM @TempTable2
+
+;WITH CTE AS (
+    SELECT t1.Number, t1.Amount, t1.StartDate,
+        CASE
+            WHEN t1.EndDate >= DATEADD(DAY, -1, t2.StartDate) THEN DATEADD(DAY, -1, t2.StartDate)
+            ELSE t1.EndDate
+        END AS EndDate
+		, datediff (dd, t2.EndDate, t1.MaxDate)  as dateNEw
+		, t1.MaxDate as m1, t2.MaxDate as m2
+    FROM @TempTable t1
+    INNER JOIN @TempTable t2 ON t1.Number <> t2.Number
+        AND t1.StartDate <= t2.EndDate
+        AND t1.EndDate >= t2.StartDate
+)
+SELECT Amount, StartDate, EndDate, dateNEw, m1, m2
+FROM CTE cte
+WHERE StartDate <> EndDate
+order by cte.Amount
+
+
+DECLARE
     @startDate1 DATE = '2023-01-10',
     @endDate1 DATE = '2023-06-15',
     @startDate2 DATE = '2023-05-01',
